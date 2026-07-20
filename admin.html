@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mwanguku Farms — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --royal-blue:#0D47A1;
+  --royal-blue-dark:#082D63;
+  --royal-blue-light:#1A5FC4;
+  --gold:#FBC02D;
+  --gold-dark:#E0A800;
+  --white:#FFFFFF;
+  --dark-gray:#222222;
+  --cream:#FAF9F5;
+  --gray-100:#F1F3F6;
+  --gray-200:#E7EAF0;
+  --gray-300:#D9DEE6;
+  --text-muted:#5B6472;
+  --danger:#E53935;
+  --success:#2E7D32;
+  --radius-sm:8px;
+  --radius-md:14px;
+  --shadow-sm:0 2px 10px rgba(13,71,161,0.07);
+  --shadow-md:0 10px 30px rgba(13,71,161,0.12);
+}
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+body{ font-family:'Inter',sans-serif; background:var(--gray-100); color:var(--dark-gray); }
+h1,h2,h3,h4{ font-family:'Poppins',sans-serif; color:var(--royal-blue-dark); }
+button{ font-family:inherit; cursor:pointer; border:none; }
+input,select,textarea{ font-family:inherit; font-size:0.92rem; }
+a{ color:inherit; text-decoration:none; }
+::-webkit-scrollbar{ width:8px; height:8px; }
+::-webkit-scrollbar-thumb{ background:var(--gray-300); border-radius:8px; }
+
+/* ============================================================
+   LOGIN VIEW
+   ============================================================ */
+#login-view{
+  min-height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(160deg, var(--royal-blue-dark) 0%, var(--royal-blue) 100%);
+  padding:24px;
+}
+.login-card{
+  background:var(--white);
+  width:100%; max-width:400px;
+  border-radius:20px;
+  padding:40px 36px;
+  box-shadow:var(--shadow-md);
+}
+.login-logo{ display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+.login-logo span{ font-family:'Poppins',sans-serif; font-weight:700; font-size:1.1rem; color:var(--royal-blue-dark); }
+.login-card h1{ font-size:1.5rem; margin:18px 0 4px; }
+.login-card p.sub{ color:var(--text-muted); font-size:0.9rem; margin-bottom:26px; }
+.field{ margin-bottom:16px; display:flex; flex-direction:column; gap:6px; }
+.field label{ font-size:0.82rem; font-weight:600; color:var(--royal-blue-dark); }
+.field input{
+  padding:12px 14px; border:1.5px solid var(--gray-300); border-radius:var(--radius-sm);
+  transition:border-color .2s;
+}
+.field input:focus{ outline:none; border-color:var(--royal-blue); }
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:12px 22px; border-radius:100px; font-weight:600; font-size:0.92rem;
+  transition:transform .2s, box-shadow .2s, opacity .2s;
+}
+.btn-primary{ background:linear-gradient(135deg, var(--gold), var(--gold-dark)); color:var(--royal-blue-dark); box-shadow:0 8px 20px rgba(251,192,45,.35); }
+.btn-primary:hover{ transform:translateY(-2px); }
+.btn-block{ width:100%; }
+.btn-outline{ background:transparent; border:1.5px solid var(--gray-300); color:var(--dark-gray); }
+.btn-outline:hover{ border-color:var(--royal-blue); color:var(--royal-blue); }
+.btn-danger{ background:#FDECEA; color:var(--danger); }
+.btn-danger:hover{ background:var(--danger); color:var(--white); }
+.btn-sm{ padding:8px 14px; font-size:0.82rem; }
+.btn:disabled{ opacity:0.6; cursor:not-allowed; }
+
+.login-error{
+  background:#FDECEA; color:var(--danger); font-size:0.85rem;
+  padding:10px 14px; border-radius:var(--radius-sm); margin-bottom:16px; display:none;
+}
+.login-error.visible{ display:block; }
+
+.api-toggle{ margin-top:22px; border-top:1px solid var(--gray-200); padding-top:18px; }
+.api-toggle summary{ font-size:0.8rem; color:var(--text-muted); cursor:pointer; }
+.api-toggle .field{ margin-top:12px; }
+
+/* ============================================================
+   APP LAYOUT
+   ============================================================ */
+#app-view{ display:none; min-height:100vh; }
+#app-view.active{ display:flex; }
+
+.sidebar{
+  width:250px; flex-shrink:0;
+  background:var(--royal-blue-dark);
+  color:rgba(255,255,255,0.8);
+  display:flex; flex-direction:column;
+  padding:26px 18px;
+  position:fixed; top:0; bottom:0; left:0;
+  transition:transform .3s;
+  z-index:200;
+}
+.sidebar-brand{ display:flex; align-items:center; gap:10px; padding:0 8px 26px; }
+.sidebar-brand span{ font-family:'Poppins',sans-serif; font-weight:700; color:var(--white); font-size:1rem; line-height:1.2; }
+.sidebar-brand em{ display:block; font-style:normal; font-size:0.62rem; color:var(--gold); letter-spacing:.1em; }
+
+.nav-item{
+  display:flex; align-items:center; gap:12px;
+  padding:12px 14px; border-radius:10px; font-size:0.92rem; font-weight:500;
+  margin-bottom:4px; transition:background .2s, color .2s;
+}
+.nav-item svg{ width:18px; height:18px; flex-shrink:0; }
+.nav-item:hover{ background:rgba(255,255,255,0.06); color:var(--white); }
+.nav-item.active{ background:var(--gold); color:var(--royal-blue-dark); font-weight:600; }
+
+.sidebar-footer{ margin-top:auto; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); }
+
+.main{ flex:1; margin-left:250px; display:flex; flex-direction:column; min-width:0; }
+
+.topbar{
+  background:var(--white); border-bottom:1px solid var(--gray-200);
+  padding:16px 30px; display:flex; align-items:center; justify-content:space-between;
+  position:sticky; top:0; z-index:100;
+}
+.topbar h2{ font-size:1.15rem; }
+.topbar-right{ display:flex; align-items:center; gap:14px; }
+.admin-chip{ display:flex; align-items:center; gap:10px; font-size:0.86rem; color:var(--text-muted); }
+.admin-avatar{
+  width:34px; height:34px; border-radius:50%; background:var(--gold);
+  color:var(--royal-blue-dark); display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:0.85rem; font-family:'Poppins',sans-serif;
+}
+.menu-toggle{ display:none; background:none; color:var(--royal-blue-dark); }
+
+.content{ padding:28px 30px 60px; }
+.view{ display:none; }
+.view.active{ display:block; }
+
+/* ============================================================
+   DASHBOARD CARDS
+   ============================================================ */
+.stat-cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:20px; margin-bottom:30px; }
+.stat-card{
+  background:var(--white); border-radius:var(--radius-md); padding:22px;
+  box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:6px;
+  border-left:4px solid var(--gold);
+}
+.stat-card .value{ font-family:'Poppins',sans-serif; font-size:1.9rem; font-weight:800; color:var(--royal-blue); }
+.stat-card .label{ font-size:0.85rem; color:var(--text-muted); font-weight:500; }
+
+.panel{
+  background:var(--white); border-radius:var(--radius-md); padding:26px;
+  box-shadow:var(--shadow-sm); margin-bottom:26px;
+}
+.panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:12px; }
+.panel-head h3{ font-size:1.05rem; }
+
+/* ============================================================
+   TABLES
+   ============================================================ */
+.table-wrap{ overflow-x:auto; }
+table{ width:100%; border-collapse:collapse; font-size:0.88rem; }
+th, td{ text-align:left; padding:12px 14px; border-bottom:1px solid var(--gray-100); white-space:nowrap; }
+th{ color:var(--text-muted); font-weight:600; font-size:0.78rem; text-transform:uppercase; letter-spacing:.03em; }
+tbody tr:hover{ background:var(--cream); }
+td.wrap{ white-space:normal; max-width:260px; }
+.thumb{ width:44px; height:44px; border-radius:8px; object-fit:cover; background:var(--gray-100); display:flex; align-items:center; justify-content:center; color:var(--gray-300); font-size:0.6rem; }
+
+.badge{ display:inline-flex; padding:4px 11px; border-radius:100px; font-size:0.74rem; font-weight:600; }
+.badge-yellow{ background:#FFF6DD; color:var(--gold-dark); }
+.badge-green{ background:#E8F5E9; color:var(--success); }
+.badge-red{ background:#FDECEA; color:var(--danger); }
+.badge-blue{ background:#E8EFFB; color:var(--royal-blue); }
+.badge-gray{ background:var(--gray-100); color:var(--text-muted); }
+
+.row-actions{ display:flex; gap:8px; }
+.icon-btn{
+  width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  background:var(--gray-100); color:var(--text-muted); transition:background .2s, color .2s;
+}
+.icon-btn svg{ width:16px; height:16px; }
+.icon-btn:hover{ background:var(--royal-blue); color:var(--white); }
+.icon-btn.danger:hover{ background:var(--danger); }
+
+select.status-select{ padding:7px 10px; border-radius:var(--radius-sm); border:1.5px solid var(--gray-300); font-size:0.82rem; }
+
+.empty-state{ padding:40px 20px; text-align:center; color:var(--text-muted); font-size:0.9rem; }
+
+/* ============================================================
+   GALLERY GRID (admin)
+   ============================================================ */
+.admin-gallery-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:18px; }
+.admin-gallery-item{
+  border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--gray-200); background:var(--cream);
+}
+.admin-gallery-img{
+  height:130px; display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(145deg,#EAF0FB,#F6F8FD); color:var(--royal-blue-light); font-size:0.72rem;
+  font-weight:600; text-align:center; padding:8px;
+}
+.admin-gallery-img img{ width:100%; height:100%; object-fit:cover; }
+.admin-gallery-meta{ padding:12px 14px; }
+.admin-gallery-meta h4{ font-size:0.9rem; margin-bottom:4px; }
+.admin-gallery-meta span{ font-size:0.75rem; color:var(--text-muted); }
+.admin-gallery-actions{ display:flex; gap:8px; padding:0 14px 14px; }
+
+/* ============================================================
+   STATS EDITOR
+   ============================================================ */
+.stat-edit-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:18px; }
+.stat-edit-card{ border:1.5px solid var(--gray-200); border-radius:var(--radius-md); padding:18px; }
+.stat-edit-card .field{ margin-bottom:12px; }
+.stat-edit-card .field input{ padding:9px 12px; }
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(8,24,55,0.55); z-index:1000;
+  display:none; align-items:flex-start; justify-content:center; padding:40px 20px; overflow-y:auto;
+}
+.modal-overlay.active{ display:flex; }
+.modal{
+  background:var(--white); border-radius:18px; width:100%; max-width:520px;
+  padding:28px; box-shadow:var(--shadow-md);
+}
+.modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.modal-head h3{ font-size:1.1rem; }
+.modal-close{ font-size:1.4rem; color:var(--text-muted); line-height:1; background:none; }
+.modal-close:hover{ color:var(--danger); }
+.modal form{ display:flex; flex-direction:column; gap:14px; }
+.form-grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.field select, .field textarea{
+  padding:12px 14px; border:1.5px solid var(--gray-300); border-radius:var(--radius-sm); width:100%;
+}
+.field textarea{ resize:vertical; min-height:80px; }
+.checkbox-row{ display:flex; align-items:center; gap:8px; }
+.checkbox-row input{ width:16px; height:16px; }
+.file-preview{
+  width:100%; height:120px; border:1.5px dashed var(--gray-300); border-radius:var(--radius-sm);
+  display:flex; align-items:center; justify-content:center; overflow:hidden; background:var(--gray-100); color:var(--text-muted); font-size:0.78rem;
+}
+.file-preview img{ width:100%; height:100%; object-fit:cover; }
+.modal-actions{ display:flex; gap:12px; justify-content:flex-end; margin-top:6px; }
+
+.toast-stack{ position:fixed; top:20px; right:20px; z-index:2000; display:flex; flex-direction:column; gap:10px; }
+.toast{
+  background:var(--royal-blue-dark); color:var(--white); padding:13px 20px; border-radius:10px;
+  font-size:0.86rem; box-shadow:var(--shadow-md); opacity:0; transform:translateX(20px);
+  transition:opacity .3s, transform .3s;
+}
+.toast.visible{ opacity:1; transform:translateX(0); }
+.toast.error{ background:var(--danger); }
+.toast.success{ background:var(--success); }
+
+.rating-stars{ color:var(--gold); font-size:0.9rem; letter-spacing:1px; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:920px){
+  .sidebar{ transform:translateX(-100%); }
+  .sidebar.open{ transform:translateX(0); }
+  .main{ margin-left:0; }
+  .menu-toggle{ display:flex; align-items:center; justify-content:center; width:38px; height:38px; border-radius:8px; }
+  .form-grid-2{ grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ============================================================= -->
+<!-- LOGIN VIEW                                                     -->
+<!-- ============================================================= -->
+<div id="login-view">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg width="30" height="30" viewBox="0 0 56 56" fill="none"><path d="M28 4C28 4 40 14 40 26C40 33.2 34.6 39 28 39C21.4 39 16 33.2 16 26C16 14 28 4 28 4Z" stroke="#0D47A1" stroke-width="3"/><path d="M28 39C28 39 28 46 22 50" stroke="#0D47A1" stroke-width="3" stroke-linecap="round"/><path d="M28 39C28 39 28 46 34 50" stroke="#0D47A1" stroke-width="3" stroke-linecap="round"/></svg>
+      <span>MWANGUKU FARMS</span>
+    </div>
+    <h1>Admin Sign In</h1>
+    <p class="sub">Manage products, gallery, orders and more.</p>
+
+    <div class="login-error" id="login-error"></div>
+
+    <form id="login-form">
+      <div class="field">
+        <label for="login-email">Email Address</label>
+        <input type="email" id="login-email" placeholder="admin@mwangukufarms.co.ke" required>
+      </div>
+      <div class="field">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="login-submit">Sign In</button>
+    </form>
+
+    <details class="api-toggle">
+      <summary>API server settings</summary>
+      <div class="field">
+        <label for="api-base-input">API Base URL</label>
+        <input type="text" id="api-base-input" placeholder="https://your-app.onrender.com">
+      </div>
+      <button type="button" class="btn btn-outline btn-sm" id="save-api-base">Save</button>
+    </details>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- APP VIEW                                                       -->
+<!-- ============================================================= -->
+<div id="app-view">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <svg width="26" height="26" viewBox="0 0 56 56" fill="none"><path d="M28 4C28 4 40 14 40 26C40 33.2 34.6 39 28 39C21.4 39 16 33.2 16 26C16 14 28 4 28 4Z" stroke="#FBC02D" stroke-width="3"/><path d="M28 39C28 39 28 46 22 50" stroke="#FBC02D" stroke-width="3" stroke-linecap="round"/><path d="M28 39C28 39 28 46 34 50" stroke="#FBC02D" stroke-width="3" stroke-linecap="round"/></svg>
+      <span>MWANGUKU<em>FARMS ADMIN</em></span>
+    </div>
+
+    <nav>
+      <a href="#" class="nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="3" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="3" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/><rect x="13" y="13" width="8" height="8" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+        Dashboard
+      </a>
+      <a href="#" class="nav-item" data-view="products">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 16.5L8.5 11L12 14.5L16 10L20 16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+        Products
+      </a>
+      <a href="#" class="nav-item" data-view="gallery">
+        <svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="9" r="1.6" stroke="currentColor" stroke-width="1.6"/><path d="M3 16l5-5 4 4 3-3 6 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="3" y="4" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.6"/></svg>
+        Gallery
+      </a>
+      <a href="#" class="nav-item" data-view="stats">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 20V10M12 20V4M20 20v-7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        Stats
+      </a>
+      <a href="#" class="nav-item" data-view="testimonials">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M21 11.5c0 4.4-4 8-9 8-1 0-2-.1-2.9-.4L4 20l1.1-3.3A7.8 7.8 0 0 1 3 11.5c0-4.4 4-8 9-8s9 3.6 9 8Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        Testimonials
+      </a>
+      <a href="#" class="nav-item" data-view="messages">
+        <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4 6.5 12 13l8-6.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Messages
+      </a>
+      <a href="#" class="nav-item" data-view="orders">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M6 7h12l1 13H5L6 7Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 7a3 3 0 0 1 6 0" stroke="currentColor" stroke-width="1.6"/></svg>
+        Orders
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="nav-item" id="logout-btn" style="width:100%;">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Log Out
+      </button>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button class="menu-toggle" id="menu-toggle">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <h2 id="view-title">Dashboard</h2>
+      </div>
+      <div class="topbar-right">
+        <div class="admin-chip">
+          <span class="admin-avatar" id="admin-avatar">A</span>
+          <span id="admin-name">Admin</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- ============ DASHBOARD ============ -->
+      <section class="view active" id="view-dashboard">
+        <div class="stat-cards" id="dashboard-cards">
+          <div class="stat-card"><span class="value">—</span><span class="label">Products</span></div>
+          <div class="stat-card"><span class="value">—</span><span class="label">Gallery Images</span></div>
+          <div class="stat-card"><span class="value">—</span><span class="label">Pending Testimonials</span></div>
+          <div class="stat-card"><span class="value">—</span><span class="label">Unread Messages</span></div>
+          <div class="stat-card"><span class="value">—</span><span class="label">Total Orders</span></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Recent Messages</h3></div>
+          <div class="table-wrap"><table id="dashboard-recent-messages"><thead><tr><th>Name</th><th>Email</th><th class="wrap">Message</th><th>Date</th></tr></thead><tbody></tbody></table></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h3>Recent Orders</h3></div>
+          <div class="table-wrap"><table id="dashboard-recent-orders"><thead><tr><th>Order #</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead><tbody></tbody></table></div>
+        </div>
+      </section>
+
+      <!-- ============ PRODUCTS ============ -->
+      <section class="view" id="view-products">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>All Products</h3>
+            <button class="btn btn-primary btn-sm" id="add-product-btn">+ Add Product</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Image</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="products-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ GALLERY ============ -->
+      <section class="view" id="view-gallery">
+        <div class="panel">
+          <div class="panel-head">
+            <h3>Gallery Images</h3>
+            <button class="btn btn-primary btn-sm" id="add-gallery-btn">+ Upload Image</button>
+          </div>
+          <div class="admin-gallery-grid" id="gallery-grid-admin"></div>
+        </div>
+      </section>
+
+      <!-- ============ STATS ============ -->
+      <section class="view" id="view-stats">
+        <div class="panel">
+          <div class="panel-head"><h3>Homepage Stats</h3><p style="font-size:.8rem;color:var(--text-muted)">Changes reflect on the homepage counters.</p></div>
+          <div class="stat-edit-grid" id="stats-edit-grid"></div>
+        </div>
+      </section>
+
+      <!-- ============ TESTIMONIALS ============ -->
+      <section class="view" id="view-testimonials">
+        <div class="panel">
+          <div class="panel-head"><h3>Customer Testimonials</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Position</th><th class="wrap">Content</th><th>Rating</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="testimonials-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ MESSAGES ============ -->
+      <section class="view" id="view-messages">
+        <div class="panel">
+          <div class="panel-head"><h3>Contact Messages</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th class="wrap">Message</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="messages-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ORDERS ============ -->
+      <section class="view" id="view-orders">
+        <div class="panel">
+          <div class="panel-head"><h3>Customer Orders</h3></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Order #</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total</th><th>Payment</th><th>Status</th></tr></thead>
+              <tbody id="orders-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- PRODUCT MODAL                                                  -->
+<!-- ============================================================= -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="product-modal-title">Add Product</h3><button class="modal-close" data-close="product-modal">&times;</button></div>
+    <form id="product-form">
+      <input type="hidden" id="product-id">
+      <div class="field"><label for="product-name">Product Name</label><input type="text" id="product-name" required></div>
+      <div class="field"><label for="product-description">Description</label><textarea id="product-description" required></textarea></div>
+      <div class="form-grid-2">
+        <div class="field"><label for="product-price">Price (KES)</label><input type="number" id="product-price" min="0" required></div>
+        <div class="field"><label for="product-stock">Stock Quantity</label><input type="number" id="product-stock" min="0" value="0"></div>
+      </div>
+      <div class="field">
+        <label for="product-category">Category</label>
+        <select id="product-category">
+          <option>Whole Chicken</option><option>Fresh Eggs</option><option>Broilers</option>
+          <option>Layers</option><option>Day Old Chicks</option><option>Feeds</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="product-image">Product Image</label>
+        <div class="file-preview" id="product-image-preview">No image selected</div>
+        <input type="file" id="product-image" accept="image/*">
+      </div>
+      <div class="form-grid-2">
+        <div class="checkbox-row"><input type="checkbox" id="product-instock" checked><label for="product-instock">In Stock</label></div>
+        <div class="checkbox-row"><input type="checkbox" id="product-featured"><label for="product-featured">Featured</label></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" data-close="product-modal">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="product-submit-btn">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================= -->
+<!-- GALLERY MODAL                                                  -->
+<!-- ============================================================= -->
+<div class="modal-overlay" id="gallery-modal">
+  <div class="modal">
+    <div class="modal-head"><h3>Upload Gallery Image</h3><button class="modal-close" data-close="gallery-modal">&times;</button></div>
+    <form id="gallery-form">
+      <div class="field"><label for="gallery-title">Title</label><input type="text" id="gallery-title" required></div>
+      <div class="field"><label for="gallery-description">Description</label><textarea id="gallery-description"></textarea></div>
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="gallery-category">Category</label>
+          <select id="gallery-category">
+            <option>Farm Life</option><option>Flocks</option><option>Facilities</option>
+            <option>Products</option><option>Delivery</option><option>Other</option>
+          </select>
+        </div>
+        <div class="field"><label for="gallery-tags">Tags (comma separated)</label><input type="text" id="gallery-tags" placeholder="e.g. broilers, morning"></div>
+      </div>
+      <div class="field">
+        <label for="gallery-image">Image</label>
+        <div class="file-preview" id="gallery-image-preview">No image selected</div>
+        <input type="file" id="gallery-image" accept="image/*" required>
+      </div>
+      <div class="checkbox-row"><input type="checkbox" id="gallery-featured"><label for="gallery-featured">Featured</label></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-outline" data-close="gallery-modal">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="gallery-submit-btn">Upload</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script>
+/* ============================================================
+   0. STATE & CONFIG
+   ============================================================ */
+const state = {
+  apiBase: localStorage.getItem('mwf_api_base') || window.location.origin,
+  token: localStorage.getItem('mwf_token') || null,
+  user: JSON.parse(localStorage.getItem('mwf_user') || 'null'),
+};
+
+const el = (id) => document.getElementById(id);
+
+/* ============================================================
+   1. TOAST NOTIFICATIONS
+   ============================================================ */
+function showToast(message, type = 'info') {
+  const stack = el('toast-stack');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = message;
+  stack.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add('visible'));
+  setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+/* ============================================================
+   2. API HELPER
+   ============================================================ */
+async function api(path, { method = 'GET', body = null, isForm = false } = {}) {
+  const headers = {};
+  if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+  if (!isForm && body) headers['Content-Type'] = 'application/json';
+
+  const res = await fetch(`${state.apiBase}${path}`, {
+    method,
+    headers,
+    body: isForm ? body : body ? JSON.stringify(body) : undefined,
+  });
+
+  let data;
+  try { data = await res.json(); } catch { data = {}; }
+
+  if (!res.ok) {
+    throw new Error(data.message || `Request failed (${res.status})`);
+  }
+  return data;
+}
+
+/* ============================================================
+   3. LOGIN / LOGOUT
+   ============================================================ */
+el('api-base-input').value = state.apiBase;
+
+el('save-api-base').addEventListener('click', () => {
+  const val = el('api-base-input').value.trim().replace(/\/$/, '');
+  if (val) {
+    state.apiBase = val;
+    localStorage.setItem('mwf_api_base', val);
+    showToast('API base URL saved', 'success');
+  }
+});
+
+function showLoginError(msg) {
+  const box = el('login-error');
+  box.textContent = msg;
+  box.classList.add('visible');
+}
+function hideLoginError() {
+  el('login-error').classList.remove('visible');
+}
+
+el('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideLoginError();
+  const btn = el('login-submit');
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+
+  try {
+    const email = el('login-email').value.trim();
+    const password = el('login-password').value;
+    const data = await api('/api/auth/login', { method: 'POST', body: { email, password } });
+
+    if (data.user.role !== 'admin') {
+      throw new Error('This account does not have admin access.');
+    }
+
+    state.token = data.token;
+    state.user = data.user;
+    localStorage.setItem('mwf_token', data.token);
+    localStorage.setItem('mwf_user', JSON.stringify(data.user));
+
+    enterApp();
+  } catch (err) {
+    showLoginError(err.message || 'Login failed. Please check your credentials.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sign In';
+  }
+});
+
+el('logout-btn').addEventListener('click', () => {
+  state.token = null;
+  state.user = null;
+  localStorage.removeItem('mwf_token');
+  localStorage.removeItem('mwf_user');
+  el('app-view').classList.remove('active');
+  el('login-view').style.display = 'flex';
+});
+
+function enterApp() {
+  el('login-view').style.display = 'none';
+  el('app-view').classList.add('active');
+  el('admin-name').textContent = state.user.name;
+  el('admin-avatar').textContent = state.user.name.slice(0, 1).toUpperCase();
+  loadAllData();
+}
+
+// Auto-login if a token is already stored
+if (state.token && state.user) {
+  enterApp();
+}
+
+/* ============================================================
+   4. NAVIGATION
+   ============================================================ */
+const viewTitles = {
+  dashboard: 'Dashboard', products: 'Products', gallery: 'Gallery',
+  stats: 'Homepage Stats', testimonials: 'Testimonials', messages: 'Contact Messages', orders: 'Orders',
+};
+
+document.querySelectorAll('.nav-item[data-view]').forEach((item) => {
+  item.addEventListener('click', (e) => {
+    e.preventDefault();
+    const viewName = item.dataset.view;
+    document.querySelectorAll('.nav-item[data-view]').forEach((n) => n.classList.remove('active'));
+    item.classList.add('active');
+    document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
+    el(`view-${viewName}`).classList.add('active');
+    el('view-title').textContent = viewTitles[viewName];
+    el('sidebar').classList.remove('open');
+  });
+});
+
+el('menu-toggle').addEventListener('click', () => el('sidebar').classList.toggle('open'));
+
+/* ============================================================
+   5. MODAL HELPERS
+   ============================================================ */
+function openModal(id) { el(id).classList.add('active'); }
+function closeModal(id) { el(id).classList.remove('active'); }
+document.querySelectorAll('[data-close]').forEach((btn) => {
+  btn.addEventListener('click', () => closeModal(btn.dataset.close));
+});
+document.querySelectorAll('.modal-overlay').forEach((overlay) => {
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('active'); });
+});
+
+function previewFile(inputId, previewId) {
+  const input = el(inputId);
+  input.addEventListener('change', () => {
+    const file = input.files[0];
+    const preview = el(previewId);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => { preview.innerHTML = `<img src="${e.target.result}" alt="preview">`; };
+      reader.readAsDataURL(file);
+    } else {
+      preview.innerHTML = 'No image selected';
+    }
+  });
+}
+previewFile('product-image', 'product-image-preview');
+previewFile('gallery-image', 'gallery-image-preview');
+
+/* ============================================================
+   6. DATA LOADERS (all views)
+   ============================================================ */
+async function loadAllData() {
+  await Promise.allSettled([
+    loadDashboard(), loadProducts(), loadGallery(), loadStats(), loadTestimonials(), loadMessages(), loadOrders(),
+  ]);
+}
+
+function fmtDate(d) { return new Date(d).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }); }
+function fmtMoney(n) { return `KES ${Number(n).toLocaleString()}`; }
+function imgUrl(path) {
+  if (!path) return '';
+  return path.startsWith('http') ? path : `${state.apiBase}${path}`;
+}
+
+/* ---- Dashboard ---- */
+async function loadDashboard() {
+  try {
+    const [products, gallery, testimonials, messages, orders] = await Promise.all([
+      api('/api/products'), api('/api/gallery'), api('/api/testimonials?all=true'),
+      api('/api/contact'), api('/api/orders'),
+    ]);
+
+    const cards = el('dashboard-cards');
+    const pendingTestimonials = testimonials.testimonials.filter((t) => !t.isApproved).length;
+    const unreadMessages = messages.messages.filter((m) => m.status === 'new').length;
+
+    cards.innerHTML = `
+      <div class="stat-card"><span class="value">${products.count}</span><span class="label">Products</span></div>
+      <div class="stat-card"><span class="value">${gallery.count}</span><span class="label">Gallery Images</span></div>
+      <div class="stat-card"><span class="value">${pendingTestimonials}</span><span class="label">Pending Testimonials</span></div>
+      <div class="stat-card"><span class="value">${unreadMessages}</span><span class="label">Unread Messages</span></div>
+      <div class="stat-card"><span class="value">${orders.count}</span><span class="label">Total Orders</span></div>
+    `;
+
+    const recentMsgs = messages.messages.slice(0, 5);
+    el('dashboard-recent-messages').querySelector('tbody').innerHTML = recentMsgs.length
+      ? recentMsgs.map((m) => `<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.email)}</td><td class="wrap">${escapeHtml(m.message)}</td><td>${fmtDate(m.createdAt)}</td></tr>`).join('')
+      : `<tr><td colspan="4" class="empty-state">No messages yet.</td></tr>`;
+
+    const recentOrders = orders.orders.slice(0, 5);
+    el('dashboard-recent-orders').querySelector('tbody').innerHTML = recentOrders.length
+      ? recentOrders.map((o) => `<tr><td>${o.orderNumber}</td><td>${escapeHtml(o.customer.name)}</td><td>${fmtMoney(o.total)}</td><td>${statusBadge(o.status)}</td></tr>`).join('')
+      : `<tr><td colspan="4" class="empty-state">No orders yet.</td></tr>`;
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function escapeHtml(str = '') {
+  return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function statusBadge(status) {
+  const map = {
+    pending: 'badge-yellow', confirmed: 'badge-blue', processing: 'badge-blue',
+    delivered: 'badge-green', cancelled: 'badge-red', new: 'badge-yellow', read: 'badge-blue',
+    replied: 'badge-green', paid: 'badge-green', failed: 'badge-red',
+  };
+  return `<span class="badge ${map[status] || 'badge-gray'}">${status}</span>`;
+}
+
+/* ---- Products ---- */
+async function loadProducts() {
+  try {
+    const { products } = await api('/api/products');
+    const tbody = el('products-tbody');
+    tbody.innerHTML = products.length ? products.map((p) => `
+      <tr>
+        <td><div class="thumb">${p.image ? `<img src="${imgUrl(p.image)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : 'IMG'}</div></td>
+        <td>${escapeHtml(p.name)}</td>
+        <td>${escapeHtml(p.category)}</td>
+        <td>${fmtMoney(p.price)}</td>
+        <td>${p.stockQuantity}</td>
+        <td>${p.inStock ? '<span class="badge badge-green">In Stock</span>' : '<span class="badge badge-red">Out of Stock</span>'}</td>
+        <td>
+          <div class="row-actions">
+            <button class="icon-btn" onclick="editProduct('${p._id}')" title="Edit">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 20h4l11-11-4-4L4 16v4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </button>
+            <button class="icon-btn danger" onclick="deleteProduct('${p._id}')" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('') : `<tr><td colspan="7" class="empty-state">No products yet — click "Add Product" to create one.</td></tr>`;
+
+    window._products = products;
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+el('add-product-btn').addEventListener('click', () => {
+  el('product-form').reset();
+  el('product-id').value = '';
+  el('product-image-preview').innerHTML = 'No image selected';
+  el('product-modal-title').textContent = 'Add Product';
+  openModal('product-modal');
+});
+
+window.editProduct = (id) => {
+  const p = window._products.find((x) => x._id === id);
+  if (!p) return;
+  el('product-id').value = p._id;
+  el('product-name').value = p.name;
+  el('product-description').value = p.description;
+  el('product-price').value = p.price;
+  el('product-stock').value = p.stockQuantity;
+  el('product-category').value = p.category;
+  el('product-instock').checked = p.inStock;
+  el('product-featured').checked = p.featured;
+  el('product-image-preview').innerHTML = p.image ? `<img src="${imgUrl(p.image)}">` : 'No image selected';
+  el('product-modal-title').textContent = 'Edit Product';
+  openModal('product-modal');
+};
+
+window.deleteProduct = async (id) => {
+  if (!confirm('Delete this product? This cannot be undone.')) return;
+  try {
+    await api(`/api/products/${id}`, { method: 'DELETE' });
+    showToast('Product deleted', 'success');
+    loadProducts();
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+el('product-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = el('product-submit-btn');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  try {
+    const id = el('product-id').value;
+    const fd = new FormData();
+    fd.append('name', el('product-name').value);
+    fd.append('description', el('product-description').value);
+    fd.append('price', el('product-price').value);
+    fd.append('stockQuantity', el('product-stock').value);
+    fd.append('category', el('product-category').value);
+    fd.append('inStock', el('product-instock').checked);
+    fd.append('featured', el('product-featured').checked);
+    const file = el('product-image').files[0];
+    if (file) fd.append('image', file);
+
+    if (id) {
+      await api(`/api/products/${id}`, { method: 'PUT', body: fd, isForm: true });
+      showToast('Product updated', 'success');
+    } else {
+      await api('/api/products', { method: 'POST', body: fd, isForm: true });
+      showToast('Product created', 'success');
+    }
+    closeModal('product-modal');
+    loadProducts();
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Product';
+  }
+});
+
+/* ---- Gallery ---- */
+async function loadGallery() {
+  try {
+    const { images } = await api('/api/gallery');
+    const grid = el('gallery-grid-admin');
+    grid.innerHTML = images.length ? images.map((g) => `
+      <div class="admin-gallery-item">
+        <div class="admin-gallery-img">${g.image ? `<img src="${imgUrl(g.image)}">` : escapeHtml(g.title)}</div>
+        <div class="admin-gallery-meta">
+          <h4>${escapeHtml(g.title)}</h4>
+          <span>${escapeHtml(g.category)}${g.featured ? ' · Featured' : ''}</span>
+        </div>
+        <div class="admin-gallery-actions">
+          <button class="icon-btn danger" style="width:100%;" onclick="deleteGalleryItem('${g._id}')">Delete</button>
+        </div>
+      </div>
+    `).join('') : `<div class="empty-state">No gallery images yet — click "Upload Image" to add one.</div>`;
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+el('add-gallery-btn').addEventListener('click', () => {
+  el('gallery-form').reset();
+  el('gallery-image-preview').innerHTML = 'No image selected';
+  openModal('gallery-modal');
+});
+
+window.deleteGalleryItem = async (id) => {
+  if (!confirm('Delete this gallery image?')) return;
+  try {
+    await api(`/api/gallery/${id}`, { method: 'DELETE' });
+    showToast('Image deleted', 'success');
+    loadGallery();
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+el('gallery-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = el('gallery-submit-btn');
+  btn.disabled = true; btn.textContent = 'Uploading...';
+
+  try {
+    const fd = new FormData();
+    fd.append('title', el('gallery-title').value);
+    fd.append('description', el('gallery-description').value);
+    fd.append('category', el('gallery-category').value);
+    fd.append('tags', el('gallery-tags').value);
+    fd.append('featured', el('gallery-featured').checked);
+    const file = el('gallery-image').files[0];
+    if (file) fd.append('image', file);
+
+    await api('/api/gallery', { method: 'POST', body: fd, isForm: true });
+    showToast('Image uploaded', 'success');
+    closeModal('gallery-modal');
+    loadGallery();
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Upload';
+  }
+});
+
+/* ---- Stats ---- */
+async function loadStats() {
+  try {
+    const { stats } = await api('/api/stats');
+    const grid = el('stats-edit-grid');
+    grid.innerHTML = stats.map((s) => `
+      <div class="stat-edit-card" data-id="${s._id}">
+        <div class="field"><label>Label</label><input type="text" class="stat-label-input" value="${escapeHtml(s.label)}"></div>
+        <div class="form-grid-2">
+          <div class="field"><label>Value</label><input type="number" class="stat-value-input" value="${s.value}"></div>
+          <div class="field"><label>Suffix</label><input type="text" class="stat-suffix-input" value="${escapeHtml(s.suffix || '')}"></div>
+        </div>
+        <button class="btn btn-primary btn-sm btn-block" onclick="saveStat('${s._id}', this)">Save</button>
+      </div>
+    `).join('');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+window.saveStat = async (id, btn) => {
+  const card = btn.closest('.stat-edit-card');
+  const label = card.querySelector('.stat-label-input').value;
+  const value = Number(card.querySelector('.stat-value-input').value);
+  const suffix = card.querySelector('.stat-suffix-input').value;
+
+  btn.disabled = true; btn.textContent = 'Saving...';
+  try {
+    await api(`/api/stats/${id}`, { method: 'PUT', body: { label, value, suffix } });
+    showToast('Stat updated', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save';
+  }
+};
+
+/* ---- Testimonials ---- */
+async function loadTestimonials() {
+  try {
+    const { testimonials } = await api('/api/testimonials?all=true');
+    const tbody = el('testimonials-tbody');
+    tbody.innerHTML = testimonials.length ? testimonials.map((t) => `
+      <tr>
+        <td>${escapeHtml(t.name)}</td>
+        <td>${escapeHtml(t.position || '—')}</td>
+        <td class="wrap">${escapeHtml(t.content)}</td>
+        <td><span class="rating-stars">${'★'.repeat(t.rating)}${'☆'.repeat(5 - t.rating)}</span></td>
+        <td>${t.isApproved ? '<span class="badge badge-green">Approved</span>' : '<span class="badge badge-yellow">Pending</span>'}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn btn-sm ${t.isApproved ? 'btn-outline' : 'btn-primary'}" onclick="toggleApproval('${t._id}', ${!t.isApproved})">
+              ${t.isApproved ? 'Unapprove' : 'Approve'}
+            </button>
+            <button class="icon-btn danger" onclick="deleteTestimonial('${t._id}')" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('') : `<tr><td colspan="6" class="empty-state">No testimonials submitted yet.</td></tr>`;
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+window.toggleApproval = async (id, isApproved) => {
+  try {
+    await api(`/api/testimonials/${id}/approve`, { method: 'PUT', body: { isApproved } });
+    showToast(isApproved ? 'Testimonial approved' : 'Testimonial unapproved', 'success');
+    loadTestimonials();
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+window.deleteTestimonial = async (id) => {
+  if (!confirm('Delete this testimonial?')) return;
+  try {
+    await api(`/api/testimonials/${id}`, { method: 'DELETE' });
+    showToast('Testimonial deleted', 'success');
+    loadTestimonials();
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+/* ---- Messages ---- */
+async function loadMessages() {
+  try {
+    const { messages } = await api('/api/contact');
+    const tbody = el('messages-tbody');
+    tbody.innerHTML = messages.length ? messages.map((m) => `
+      <tr>
+        <td>${escapeHtml(m.name)}</td>
+        <td>${escapeHtml(m.email)}</td>
+        <td>${escapeHtml(m.phone || '—')}</td>
+        <td class="wrap">${escapeHtml(m.message)}</td>
+        <td>${fmtDate(m.createdAt)}</td>
+        <td>${statusBadge(m.status)}</td>
+        <td>
+          <div class="row-actions">
+            ${m.status === 'new' ? `<button class="btn btn-sm btn-outline" onclick="markMessage('${m._id}','read')">Mark Read</button>` : ''}
+            <button class="icon-btn danger" onclick="deleteMessage('${m._id}')" title="Delete">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m2 0-1 13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('') : `<tr><td colspan="7" class="empty-state">No messages yet.</td></tr>`;
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+window.markMessage = async (id, status) => {
+  try {
+    await api(`/api/contact/${id}`, { method: 'PUT', body: { status } });
+    showToast('Message updated', 'success');
+    loadMessages();
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+window.deleteMessage = async (id) => {
+  if (!confirm('Delete this message?')) return;
+  try {
+    await api(`/api/contact/${id}`, { method: 'DELETE' });
+    showToast('Message deleted', 'success');
+    loadMessages();
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+/* ---- Orders ---- */
+async function loadOrders() {
+  try {
+    const { orders } = await api('/api/orders');
+    const tbody = el('orders-tbody');
+    tbody.innerHTML = orders.length ? orders.map((o) => `
+      <tr>
+        <td>${o.orderNumber}</td>
+        <td>${escapeHtml(o.customer.name)}</td>
+        <td>${escapeHtml(o.customer.phone)}</td>
+        <td>${o.items.length} item(s)</td>
+        <td>${fmtMoney(o.total)}</td>
+        <td>
+          <select class="status-select" onchange="updateOrder('${o._id}', 'paymentStatus', this.value)">
+            ${['pending', 'paid', 'failed'].map((s) => `<option value="${s}" ${o.paymentStatus === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <select class="status-select" onchange="updateOrder('${o._id}', 'status', this.value)">
+            ${['pending', 'confirmed', 'processing', 'delivered', 'cancelled'].map((s) => `<option value="${s}" ${o.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+          </select>
+        </td>
+      </tr>
+    `).join('') : `<tr><td colspan="7" class="empty-state">No orders placed yet.</td></tr>`;
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+window.updateOrder = async (id, field, value) => {
+  try {
+    await api(`/api/orders/${id}/status`, { method: 'PUT', body: { [field]: value } });
+    showToast('Order updated', 'success');
+    loadDashboard();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+</script>
+</body>
+</html>
