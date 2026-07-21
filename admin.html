@@ -292,11 +292,11 @@ select.status-select{ padding:7px 10px; border-radius:var(--radius-sm); border:1
     <form id="login-form">
       <div class="field">
         <label for="login-email">Email Address</label>
-        <input type="email" id="login-email" placeholder="admin@mwangukufarms.co.ke" required>
+        <input type="email" id="login-email" placeholder="admin@mwangukufarms.co.ke" value="admin@mwangukufarms.co.ke">
       </div>
       <div class="field">
         <label for="login-password">Password</label>
-        <input type="password" id="login-password" placeholder="••••••••" required>
+        <input type="password" id="login-password" placeholder="••••••••" value="SecureAdmin2026">
       </div>
       <button type="submit" class="btn btn-primary btn-block" id="login-submit">Sign In</button>
     </form>
@@ -496,8 +496,8 @@ select.status-select{ padding:7px 10px; border-radius:var(--radius-sm); border:1
       <div class="field">
         <label for="product-category">Category</label>
         <select id="product-category">
-          <option>Whole Chicken</option><option>Fresh Eggs</option><option>Broilers</option>
-          <option>Layers</option><option>Day Old Chicks</option><option>Feeds</option><option>Other</option>
+          <option>chicken</option><option>eggs</option><option>chicks</option>
+          <option>feeds</option><option>live-birds</option><option>Other</option>
         </select>
       </div>
       <div class="field">
@@ -530,8 +530,8 @@ select.status-select{ padding:7px 10px; border-radius:var(--radius-sm); border:1
         <div class="field">
           <label for="gallery-category">Category</label>
           <select id="gallery-category">
-            <option>Farm Life</option><option>Flocks</option><option>Facilities</option>
-            <option>Products</option><option>Delivery</option><option>Other</option>
+            <option>farm</option><option>flocks</option><option>facilities</option>
+            <option>products</option><option>team</option><option>events</option>
           </select>
         </div>
         <div class="field"><label for="gallery-tags">Tags (comma separated)</label><input type="text" id="gallery-tags" placeholder="e.g. broilers, morning"></div>
@@ -556,8 +556,11 @@ select.status-select{ padding:7px 10px; border-radius:var(--radius-sm); border:1
 /* ============================================================
    0. STATE & CONFIG
    ============================================================ */
+// CHANGE THIS TO YOUR RENDER URL
+const DEFAULT_API_URL = 'https://mwanguku-farms-backend-ap2-1.onrender.com';
+
 const state = {
-  apiBase: localStorage.getItem('mwf_api_base') || window.location.origin,
+  apiBase: localStorage.getItem('mwf_api_base') || DEFAULT_API_URL,
   token: localStorage.getItem('mwf_token') || null,
   user: JSON.parse(localStorage.getItem('mwf_user') || 'null'),
 };
@@ -638,7 +641,7 @@ el('login-form').addEventListener('submit', async (e) => {
     const password = el('login-password').value;
     const data = await api('/api/auth/login', { method: 'POST', body: { email, password } });
 
-    if (data.user.role !== 'admin') {
+    if (data.user && data.user.role !== 'admin') {
       throw new Error('This account does not have admin access.');
     }
 
@@ -668,8 +671,8 @@ el('logout-btn').addEventListener('click', () => {
 function enterApp() {
   el('login-view').style.display = 'none';
   el('app-view').classList.add('active');
-  el('admin-name').textContent = state.user.name;
-  el('admin-avatar').textContent = state.user.name.slice(0, 1).toUpperCase();
+  el('admin-name').textContent = state.user ? state.user.name : 'Admin';
+  el('admin-avatar').textContent = state.user ? state.user.name.slice(0, 1).toUpperCase() : 'A';
   loadAllData();
 }
 
@@ -715,9 +718,10 @@ document.querySelectorAll('.modal-overlay').forEach((overlay) => {
 
 function previewFile(inputId, previewId) {
   const input = el(inputId);
+  const preview = el(previewId);
+  if (!input || !preview) return;
   input.addEventListener('change', () => {
     const file = input.files[0];
-    const preview = el(previewId);
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => { preview.innerHTML = `<img src="${e.target.result}" alt="preview">`; };
@@ -746,40 +750,6 @@ function imgUrl(path) {
   return path.startsWith('http') ? path : `${state.apiBase}${path}`;
 }
 
-/* ---- Dashboard ---- */
-async function loadDashboard() {
-  try {
-    const [products, gallery, testimonials, messages, orders] = await Promise.all([
-      api('/api/products'), api('/api/gallery'), api('/api/testimonials?all=true'),
-      api('/api/contact'), api('/api/orders'),
-    ]);
-
-    const cards = el('dashboard-cards');
-    const pendingTestimonials = testimonials.testimonials.filter((t) => !t.isApproved).length;
-    const unreadMessages = messages.messages.filter((m) => m.status === 'new').length;
-
-    cards.innerHTML = `
-      <div class="stat-card"><span class="value">${products.count}</span><span class="label">Products</span></div>
-      <div class="stat-card"><span class="value">${gallery.count}</span><span class="label">Gallery Images</span></div>
-      <div class="stat-card"><span class="value">${pendingTestimonials}</span><span class="label">Pending Testimonials</span></div>
-      <div class="stat-card"><span class="value">${unreadMessages}</span><span class="label">Unread Messages</span></div>
-      <div class="stat-card"><span class="value">${orders.count}</span><span class="label">Total Orders</span></div>
-    `;
-
-    const recentMsgs = messages.messages.slice(0, 5);
-    el('dashboard-recent-messages').querySelector('tbody').innerHTML = recentMsgs.length
-      ? recentMsgs.map((m) => `<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.email)}</td><td class="wrap">${escapeHtml(m.message)}</td><td>${fmtDate(m.createdAt)}</td></tr>`).join('')
-      : `<tr><td colspan="4" class="empty-state">No messages yet.</td></tr>`;
-
-    const recentOrders = orders.orders.slice(0, 5);
-    el('dashboard-recent-orders').querySelector('tbody').innerHTML = recentOrders.length
-      ? recentOrders.map((o) => `<tr><td>${o.orderNumber}</td><td>${escapeHtml(o.customer.name)}</td><td>${fmtMoney(o.total)}</td><td>${statusBadge(o.status)}</td></tr>`).join('')
-      : `<tr><td colspan="4" class="empty-state">No orders yet.</td></tr>`;
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
-}
-
 function escapeHtml(str = '') {
   return String(str).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
@@ -793,10 +763,48 @@ function statusBadge(status) {
   return `<span class="badge ${map[status] || 'badge-gray'}">${status}</span>`;
 }
 
+/* ---- Dashboard ---- */
+async function loadDashboard() {
+  try {
+    const [products, gallery, testimonials, messages, orders] = await Promise.all([
+      api('/api/products').catch(() => ({ count: 0, products: [] })),
+      api('/api/gallery').catch(() => ({ count: 0, images: [] })),
+      api('/api/testimonials?all=true').catch(() => ({ testimonials: [] })),
+      api('/api/contact').catch(() => ({ messages: [] })),
+      api('/api/orders').catch(() => ({ count: 0, orders: [] })),
+    ]);
+
+    const cards = el('dashboard-cards');
+    const pendingTestimonials = testimonials.testimonials ? testimonials.testimonials.filter((t) => !t.isApproved).length : 0;
+    const unreadMessages = messages.messages ? messages.messages.filter((m) => m.status === 'new').length : 0;
+
+    cards.innerHTML = `
+      <div class="stat-card"><span class="value">${products.count || 0}</span><span class="label">Products</span></div>
+      <div class="stat-card"><span class="value">${gallery.count || 0}</span><span class="label">Gallery Images</span></div>
+      <div class="stat-card"><span class="value">${pendingTestimonials}</span><span class="label">Pending Testimonials</span></div>
+      <div class="stat-card"><span class="value">${unreadMessages}</span><span class="label">Unread Messages</span></div>
+      <div class="stat-card"><span class="value">${orders.count || 0}</span><span class="label">Total Orders</span></div>
+    `;
+
+    const recentMsgs = messages.messages ? messages.messages.slice(0, 5) : [];
+    el('dashboard-recent-messages').querySelector('tbody').innerHTML = recentMsgs.length
+      ? recentMsgs.map((m) => `<tr><td>${escapeHtml(m.name)}</td><td>${escapeHtml(m.email)}</td><td class="wrap">${escapeHtml(m.message)}</td><td>${fmtDate(m.createdAt)}</td></tr>`).join('')
+      : `<tr><td colspan="4" class="empty-state">No messages yet.</td></tr>`;
+
+    const recentOrders = orders.orders ? orders.orders.slice(0, 5) : [];
+    el('dashboard-recent-orders').querySelector('tbody').innerHTML = recentOrders.length
+      ? recentOrders.map((o) => `<tr><td>${o.orderNumber || 'N/A'}</td><td>${escapeHtml(o.customer?.name || 'N/A')}</td><td>${fmtMoney(o.total || 0)}</td><td>${statusBadge(o.status || 'pending')}</td></tr>`).join('')
+      : `<tr><td colspan="4" class="empty-state">No orders yet.</td></tr>`;
+  } catch (err) {
+    console.error('Dashboard error:', err);
+  }
+}
+
 /* ---- Products ---- */
 async function loadProducts() {
   try {
-    const { products } = await api('/api/products');
+    const data = await api('/api/products');
+    const products = data.products || [];
     const tbody = el('products-tbody');
     tbody.innerHTML = products.length ? products.map((p) => `
       <tr>
@@ -804,7 +812,7 @@ async function loadProducts() {
         <td>${escapeHtml(p.name)}</td>
         <td>${escapeHtml(p.category)}</td>
         <td>${fmtMoney(p.price)}</td>
-        <td>${p.stockQuantity}</td>
+        <td>${p.stockQuantity || 0}</td>
         <td>${p.inStock ? '<span class="badge badge-green">In Stock</span>' : '<span class="badge badge-red">Out of Stock</span>'}</td>
         <td>
           <div class="row-actions">
@@ -838,12 +846,12 @@ window.editProduct = (id) => {
   if (!p) return;
   el('product-id').value = p._id;
   el('product-name').value = p.name;
-  el('product-description').value = p.description;
+  el('product-description').value = p.description || '';
   el('product-price').value = p.price;
-  el('product-stock').value = p.stockQuantity;
+  el('product-stock').value = p.stockQuantity || 0;
   el('product-category').value = p.category;
   el('product-instock').checked = p.inStock;
-  el('product-featured').checked = p.featured;
+  el('product-featured').checked = p.featured || false;
   el('product-image-preview').innerHTML = p.image ? `<img src="${imgUrl(p.image)}">` : 'No image selected';
   el('product-modal-title').textContent = 'Edit Product';
   openModal('product-modal');
@@ -899,7 +907,8 @@ el('product-form').addEventListener('submit', async (e) => {
 /* ---- Gallery ---- */
 async function loadGallery() {
   try {
-    const { images } = await api('/api/gallery');
+    const data = await api('/api/gallery');
+    const images = data.images || [];
     const grid = el('gallery-grid-admin');
     grid.innerHTML = images.length ? images.map((g) => `
       <div class="admin-gallery-item">
@@ -966,7 +975,8 @@ el('gallery-form').addEventListener('submit', async (e) => {
 /* ---- Stats ---- */
 async function loadStats() {
   try {
-    const { stats } = await api('/api/stats');
+    const data = await api('/api/stats');
+    const stats = data.stats || [];
     const grid = el('stats-edit-grid');
     grid.innerHTML = stats.map((s) => `
       <div class="stat-edit-card" data-id="${s._id}">
@@ -993,6 +1003,7 @@ window.saveStat = async (id, btn) => {
   try {
     await api(`/api/stats/${id}`, { method: 'PUT', body: { label, value, suffix } });
     showToast('Stat updated', 'success');
+    loadDashboard();
   } catch (err) {
     showToast(err.message, 'error');
   } finally {
@@ -1003,14 +1014,15 @@ window.saveStat = async (id, btn) => {
 /* ---- Testimonials ---- */
 async function loadTestimonials() {
   try {
-    const { testimonials } = await api('/api/testimonials?all=true');
+    const data = await api('/api/testimonials?all=true');
+    const testimonials = data.testimonials || [];
     const tbody = el('testimonials-tbody');
     tbody.innerHTML = testimonials.length ? testimonials.map((t) => `
       <tr>
         <td>${escapeHtml(t.name)}</td>
         <td>${escapeHtml(t.position || '—')}</td>
         <td class="wrap">${escapeHtml(t.content)}</td>
-        <td><span class="rating-stars">${'★'.repeat(t.rating)}${'☆'.repeat(5 - t.rating)}</span></td>
+        <td><span class="rating-stars">${'★'.repeat(t.rating || 5)}${'☆'.repeat(5 - (t.rating || 5))}</span></td>
         <td>${t.isApproved ? '<span class="badge badge-green">Approved</span>' : '<span class="badge badge-yellow">Pending</span>'}</td>
         <td>
           <div class="row-actions">
@@ -1055,7 +1067,8 @@ window.deleteTestimonial = async (id) => {
 /* ---- Messages ---- */
 async function loadMessages() {
   try {
-    const { messages } = await api('/api/contact');
+    const data = await api('/api/contact');
+    const messages = data.messages || [];
     const tbody = el('messages-tbody');
     tbody.innerHTML = messages.length ? messages.map((m) => `
       <tr>
@@ -1106,15 +1119,16 @@ window.deleteMessage = async (id) => {
 /* ---- Orders ---- */
 async function loadOrders() {
   try {
-    const { orders } = await api('/api/orders');
+    const data = await api('/api/orders');
+    const orders = data.orders || [];
     const tbody = el('orders-tbody');
     tbody.innerHTML = orders.length ? orders.map((o) => `
       <tr>
-        <td>${o.orderNumber}</td>
-        <td>${escapeHtml(o.customer.name)}</td>
-        <td>${escapeHtml(o.customer.phone)}</td>
-        <td>${o.items.length} item(s)</td>
-        <td>${fmtMoney(o.total)}</td>
+        <td>${o.orderNumber || 'N/A'}</td>
+        <td>${escapeHtml(o.customer?.name || 'N/A')}</td>
+        <td>${escapeHtml(o.customer?.phone || '—')}</td>
+        <td>${o.items?.length || 0} item(s)</td>
+        <td>${fmtMoney(o.total || 0)}</td>
         <td>
           <select class="status-select" onchange="updateOrder('${o._id}', 'paymentStatus', this.value)">
             ${['pending', 'paid', 'failed'].map((s) => `<option value="${s}" ${o.paymentStatus === s ? 'selected' : ''}>${s}</option>`).join('')}
@@ -1141,6 +1155,13 @@ window.updateOrder = async (id, field, value) => {
     showToast(err.message, 'error');
   }
 };
+
+// Run stats after load
+setTimeout(() => {
+  if (state.token && state.user) {
+    loadAllData();
+  }
+}, 500);
 </script>
 </body>
 </html>
